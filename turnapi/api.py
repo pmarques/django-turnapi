@@ -11,6 +11,10 @@ from turnapi import settings
 
 import redis
 
+import logging
+
+logger = logging.getLogger( 'turnapi.api' )
+
 if settings.TURN_REDIS_URL is not None:
   redis_server = redis.StrictRedis.from_url( settings.TURN_REDIS_URL )
 elif settings.TURN_REDIS_UNIX_DOMAIN_SOCKET_PATH is None:
@@ -68,6 +72,8 @@ def turn( req ):
     "ttl" : ttl if ttl else 86400,
     "uris" : settings.TURN_API_URLS
   }
+
+  logger.debug( 'Response: ' + str(items) );
 
   # items = serializers.serialize('json', items, indent=4)
   items = simplejson.dumps( items )
