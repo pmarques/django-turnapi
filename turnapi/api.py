@@ -6,12 +6,19 @@ from django.utils import simplejson
 import time
 import hmac
 from hashlib import sha1 as  hash_alg
+import base64
 
 from turnapi import settings
 
 import redis
 
 import logging
+
+# REST API or dynamic Long term credentials
+if settings.TURN_AUTH:
+  from rfc5766_turn_server_auth import calc_key
+else:
+  from rfc5766_turn_server import calc_key
 
 logger = logging.getLogger( 'turnapi.api' )
 
@@ -31,6 +38,8 @@ else:
     password         = settings.TURN_REDIS_PASSWORD,
   )
 
+realm = settings.TURN_REALM
+
 def turn( req ):
   query = req.GET
 
@@ -41,40 +50,39 @@ def turn( req ):
   # Move this configurations to anywhere else!
   # SHared Secret
   shared_secret = settings.TURN_SHARED_SECRET
-  # Separator
-  SEPARATOR = ':'
 
   # Get request timestamp (Seconds since 1970)
-  timestamp = str( int( time.time() ) )
+  timestamp = str( int( time.time() ) + (ttl if ttl else 86400) )
 
   # Username is the paramter plus timestamp with an separator
   # if username not defined just use timestamp as username
-  #
-  # NOTE:
-  #  * force if to be a str, otherwise HMAC throws a TypeError Exception!
-  username = str( username + SEPARATOR + timestamp if username else timestamp )
+  username = str( timestamp + settings.TURN_SEPARATOR + username if username else timestamp )
 
-  # Use HMAC SHA1 to create temporary key
-  password = hmac.new( username, shared_secret, hash_alg).hexdigest()
+  # Call key
+  temp_pass = calc_key( username, realm, shared_secret )
 
-  uKey = 'turn/user/%s/key' % ( username )
-  pKey = 'turn/user/%s/password' % ( username )
-  kto  = settings.TURN_CREDENTIAS_TIMEOUT # seconds
+  if not settings.TURN_AUTH:
+    kKey = 'turn/user/%s/key' % ( username )
+    kto  = settings.TURN_CREDENTIAS_TIMEOUT # seconds
 
-  # Store credentials into Redis
-  redis_con.setex( uKey, kto, username )
-  redis_con.setex( pKey, kto, password )
+    # Store credentials into Redis
+    redis_con.setex( pKey, kto, shared_secret )
+
+    # return plain text pass
+    temp_pass = shared_secret
 
   items = {
     # "username" : "foo:" + timestamp,
     "username" : username,
-    "password" : password,
+    "password" : temp_pass,
     "ttl" : ttl if ttl else 86400,
     "uris" : settings.TURN_API_URLS
   }
 
   logger.debug( 'Response: ' + str(items) );
 
-  # items = serializers.serialize('json', items, indent=4)
+  # Send JSON response
   items = simplejson.dumps( items )
-  return HttpResponse( items, content_type = 'application/json; charset=utf8' )
+  response = HttpResponse( items, content_type = 'application/json; charset=utf8' )
+
+  return response
