@@ -2,9 +2,17 @@ django-turnapi
 =======================
 TURN API for django
 
+*TURN Server*
+
 https://code.google.com/p/rfc5766-turn-server/
 
-https://docs.google.com/document/d/1mG7eXFQ5o-ypMWQ1IzdkBQL0UBkLN1xXUJhJcIF5ujQ/edit?disco=AAAAAFxlldA&pli=1#
+*TURN Server API Proposal*
+
+http://tools.ietf.org/html/draft-uberti-rtcweb-turn-rest-00
+
+*Old TURN REST API on Google Docs*
+
+https://docs.google.com/document/d/1mG7eXFQ5o-ypMWQ1IzdkBQL0UBkLN1xXUJhJcIF5ujQ
 
 ------------
 Installation
@@ -27,6 +35,9 @@ How to USE
     TURN_CREDENTIAS_TIMEOUT = 300                                                                                                                            
     TURN_API_URLS = []
     TURN_SHARED_SECRET = 'mySecrete'
+    TURN_REALM = "mystite.com"
+    TURN_SEPARATOR = ":"
+    TURN_AUTH = True
 
 2. Add turn api to your app settings::
 
