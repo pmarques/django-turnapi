@@ -45,14 +45,14 @@ def turn( req ):
 
   service  = query.get( 'service',  None )
   username = query.get( 'username', None )
-  ttl      = query.get( 'ttl'     , None )
+  ttl      = query.get( 'ttl'     , settings.TURN_KEY_TTL )
 
   # Move this configurations to anywhere else!
   # SHared Secret
   shared_secret = settings.TURN_SHARED_SECRET
 
   # Get request timestamp (Seconds since 1970)
-  timestamp = str( int( time.time() ) + (ttl if ttl else 86400) )
+  timestamp = str( int( time.time() ) + ttl )
 
   # Username is the paramter plus timestamp with an separator
   # if username not defined just use timestamp as username
@@ -75,8 +75,8 @@ def turn( req ):
     # "username" : "foo:" + timestamp,
     "username" : username,
     "password" : temp_pass,
-    "ttl" : ttl if ttl else 86400,
-    "uris" : settings.TURN_API_URLS
+    "ttl"      : ttl,
+    "uris"     : settings.TURN_API_URLS
   }
 
   logger.debug( 'Response: ' + str(items) );

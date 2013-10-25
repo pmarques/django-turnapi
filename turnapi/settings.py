@@ -15,3 +15,5 @@ TURN_SHARED_SECRET = getattr(settings, 'TURN_SHARED_SECRET', 'mySecrete')
 TURN_REALM = getattr(settings, 'TURN_REALM', 'mysite.com')
 TURN_SEPARATOR = getattr(settings, 'TURN_SEPARATOR', ':')
 TURN_AUTH = getattr(settings, 'TURN_AUTH', True)
+
+TURN_KEY_TTL = getattr(settings, 'TURN_KEY_TTL', 86400)
