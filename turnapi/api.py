@@ -20,6 +20,8 @@ if settings.TURN_AUTH:
 else:
   from rfc5766_turn_server import calc_key
 
+from shared_key_updater import Start
+
 logger = logging.getLogger( 'turnapi.api' )
 
 if settings.TURN_REDIS_URL is not None:
@@ -40,6 +42,19 @@ else:
 
 realm = settings.TURN_REALM
 
+# Move this configurations to anywhere else!
+# SHared Secret
+shared_secret = settings.TURN_SHARED_SECRET
+
+shared_secret += '0'
+
+data = {
+    'shared secret' : shared_secret,
+    'redis connection' : redis_con,
+}
+
+Start( data )
+
 def turn( req ):
   query = req.GET
 
@@ -47,18 +62,14 @@ def turn( req ):
   username = query.get( 'username', None )
   ttl      = query.get( 'ttl'     , settings.TURN_KEY_TTL )
 
-  # Move this configurations to anywhere else!
-  # SHared Secret
-  shared_secret = settings.TURN_SHARED_SECRET
-
-  # Get request timestamp (Seconds since 1970)
+  # username: the TURN username to use, which is a colon-delimited
+  # combination of the expiration timestamp and the username parameter
+  # from the request (if specified)
   timestamp = str( int( time.time() ) + ttl )
-
-  # Username is the paramter plus timestamp with an separator
-  # if username not defined just use timestamp as username
   username = str( timestamp + settings.TURN_SEPARATOR + username if username else timestamp )
 
   # Call key
+  shared_secret = data['shared secret']
   temp_pass = calc_key( username, realm, shared_secret )
 
   if not settings.TURN_AUTH:
@@ -70,19 +81,20 @@ def turn( req ):
 
     # return plain text pass
     temp_pass = shared_secret
+  # end if
 
   items = {
-    # "username" : "foo:" + timestamp,
     "username" : username,
     "password" : temp_pass,
     "ttl"      : ttl,
     "uris"     : settings.TURN_API_URLS
   }
 
-  logger.debug( 'Response: ' + str(items) );
+  logger.debug( 'Response: ' + str(items) )
 
   # Send JSON response
   items = simplejson.dumps( items )
   response = HttpResponse( items, content_type = 'application/json; charset=utf8' )
 
   return response
+# end turn function
