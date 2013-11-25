@@ -62,11 +62,11 @@ def turn( req ):
   temp_pass = calc_key( username, realm, shared_secret )
 
   if not settings.TURN_AUTH:
-    kKey = 'turn/user/%s/key' % ( username )
+    pKey = 'turn/user/%s/key' % ( username )
     kto  = settings.TURN_CREDENTIAS_TIMEOUT # seconds
 
     # Store credentials into Redis
-    redis_con.setex( pKey, kto, shared_secret )
+    redis_con.setex( pKey, kto, temp_pass )
 
     # return plain text pass
     temp_pass = shared_secret
