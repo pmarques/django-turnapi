@@ -29,7 +29,9 @@ def genKey( data, first = False ):
   # TODO: Gen random secret
   # Mod 10 to keep number lengt equal to 1 xD
   index = ( int(shared_secret[-1:] ) + 1 ) % 10
-  data['shared secret'] = shared_secret[:-1] + str( index )
+  shared_secret = shared_secret[:-1] + str( index )
+  if not first:
+    data['shared secret'] = shared_secret
 
   # the keys are always synchronized on timestamp
   ts = int( time.time() )
@@ -69,6 +71,7 @@ def genKey( data, first = False ):
 # end genKey
 
 def Start( data ):
+  logger.debug( "Start auto key generator!" )
   genKey( data )
   # generates the previous key if not define
   genKey( data, True )
